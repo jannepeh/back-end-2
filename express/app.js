@@ -4,6 +4,12 @@ const bodyParser = require("body-parser");
 const app = express();
 const mockData = require("./data/mockData.json");
 
+// Define users array globally
+const users = [
+  { user_id: 1606, name: "John Doe", email: "john@example.com" },
+  { user_id: 3671, name: "Jane Smith", email: "jane@example.com" },
+];
+
 // Middleware
 app.use(bodyParser.json());
 app.use(express.static(path.join(__dirname, "public")));
@@ -36,11 +42,6 @@ app.get("/api/media/:id", (req, res) => {
 
 // Get user by ID
 app.get("/api/user/:id", (req, res) => {
-  // Mock user data (you can extend or change this as necessary)
-  const users = [
-    { user_id: 1606, name: "John Doe", email: "john@example.com" },
-    { user_id: 3671, name: "Jane Smith", email: "jane@example.com" },
-  ];
   const user = users.find((u) => u.user_id == req.params.id);
   if (user) {
     res.status(200).json(user);
@@ -53,7 +54,6 @@ app.get("/api/user/:id", (req, res) => {
 app.post("/api/user", (req, res) => {
   const newUser = req.body;
   if (newUser && newUser.name && newUser.email) {
-    // Mock adding the user to the database
     res.status(201).json({ message: "User created", user: newUser });
   } else {
     res.status(400).json({ message: "Invalid user data" });
@@ -62,13 +62,27 @@ app.post("/api/user", (req, res) => {
 
 // Modify a user by ID
 app.put("/api/user/:id", (req, res) => {
-  // Mock update
-  res.status(200).json({ message: "User updated", userId: req.params.id });
+  try {
+    const userId = parseInt(req.params.id);
+    const user = users.find((u) => u.user_id === userId);
+
+    if (user) {
+      // Update the user data
+      user.name = req.body.name || user.name;
+      user.email = req.body.email || user.email;
+
+      res.status(200).json({ message: "User updated", user });
+    } else {
+      res.status(404).json({ message: "User not found" });
+    }
+  } catch (error) {
+    console.error(error);
+    res.status(500).json({ message: "Server error" });
+  }
 });
 
 // Delete a user by ID
 app.delete("/api/user/:id", (req, res) => {
-  // Mock deletion
   res.status(200).json({ message: "User deleted", userId: req.params.id });
 });
 
@@ -79,17 +93,17 @@ app.listen(PORT, () => {
 });
 
 /**
- * @api {get} /api/media Get all media items
- * @apiSuccess {Object[]} media List of media items
+ * @api
+ * @apiSuccess
  */
 app.get("/api/media", (req, res) => {
   res.status(200).json(mockData);
 });
 
 /**
- * @api {get} /api/media/:id Get one media item by ID
- * @apiParam {Number} id Media ID
- * @apiSuccess {Object} media Media item
+ * @api /api/media/:id
+ * @apiParam
+ * @apiSuccess
  */
 app.get("/api/media/:id", (req, res) => {
   const mediaItem = mockData.find((item) => item.media_id == req.params.id);
